@@ -13,9 +13,6 @@ namespace Graphs
     {
         public int[] histogram;
 
-        private double averageObjectIntensityReference;
-        private double averageBackgroundIntensityReference;
-
         public IntensityHistogram(Bitmap bitmap)
         {
             histogram = new int[256];
@@ -34,26 +31,14 @@ namespace Graphs
             GetDefaultSeedsValues();
         }
 
-        public double AverageObjectIntensityReferece
-        {
-            get
-            {
-                return averageObjectIntensityReference;
-            }
-        }
+        public double AverageBackgroundIntensityReferece { get; private set; }
 
-        public double AverageBackgroundIntensityReference
-        { 
-            get
-            {
-                return averageBackgroundIntensityReference;
-            }
-        }
+        public double AverageObjectIntensityReferece { get; private set; }
 
         private void GetDefaultSeedsValues()
         {
-            averageObjectIntensityReference = 0;
-            averageBackgroundIntensityReference = 0;
+            AverageBackgroundIntensityReferece = 0;
+            AverageObjectIntensityReferece = 0;
             
             int[] backwardIndexMap = new int[256];
 
@@ -90,12 +75,12 @@ namespace Graphs
                     {
                         if (i < maxDiffIndex)
                         {
-                            averageObjectIntensityReference += backwardIndexMap[i];
+                            AverageBackgroundIntensityReferece += backwardIndexMap[i];
                             objectIntensityPartitionLength += 1;
                         }
                         else
                         {
-                            averageBackgroundIntensityReference += backwardIndexMap[i];
+                            AverageObjectIntensityReferece += backwardIndexMap[i];
                             backgroundIntensityPartitionLength += 1;
                         }
                     }
@@ -103,22 +88,20 @@ namespace Graphs
                     {
                         if (i < maxDiffIndex)
                         {
-                            averageBackgroundIntensityReference += backwardIndexMap[i];
+                            AverageObjectIntensityReferece += backwardIndexMap[i];
                             backgroundIntensityPartitionLength += 1;
                         }
                         else
                         {
-                            averageObjectIntensityReference += backwardIndexMap[i];
+                            AverageBackgroundIntensityReferece += backwardIndexMap[i];
                             objectIntensityPartitionLength += 1;
                         }
                     }
                 }
             }
 
-            averageObjectIntensityReference /= objectIntensityPartitionLength;
-            averageBackgroundIntensityReference /= backgroundIntensityPartitionLength;
-
-            MessageBox.Show(averageObjectIntensityReference + " " + averageBackgroundIntensityReference);
+            AverageBackgroundIntensityReferece /= objectIntensityPartitionLength;
+            AverageObjectIntensityReferece /= backgroundIntensityPartitionLength;
         }
 
         static void Swap(ref int x, ref int y)

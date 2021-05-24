@@ -29,19 +29,19 @@
         private void InitializeComponent()
         {
             this.btn_selectImage = new System.Windows.Forms.Button();
-            this.pctrbx_SelectedImage = new System.Windows.Forms.PictureBox();
+            this.pctrbx_selectedImage = new System.Windows.Forms.PictureBox();
             this.btn_buildGraph = new System.Windows.Forms.Button();
-            this.btn_calculateMaxFlow = new System.Windows.Forms.Button();
             this.btn_printGraph = new System.Windows.Forms.Button();
-            this.btn_segment = new System.Windows.Forms.Button();
+            this.btn_segmentBackground = new System.Windows.Forms.Button();
             this.flowLayoutPanel1 = new System.Windows.Forms.FlowLayoutPanel();
+            this.btn_segmentObject = new System.Windows.Forms.Button();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.pctrbx_backgroundImage = new System.Windows.Forms.PictureBox();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
             this.pctrbx_objectImage = new System.Windows.Forms.PictureBox();
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
-            ((System.ComponentModel.ISupportInitialize)(this.pctrbx_SelectedImage)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pctrbx_selectedImage)).BeginInit();
             this.flowLayoutPanel1.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -54,7 +54,7 @@
             // btn_selectImage
             // 
             this.btn_selectImage.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btn_selectImage.Location = new System.Drawing.Point(765, 1);
+            this.btn_selectImage.Location = new System.Drawing.Point(765, 2);
             this.btn_selectImage.Margin = new System.Windows.Forms.Padding(2, 0, 0, 0);
             this.btn_selectImage.Name = "btn_selectImage";
             this.btn_selectImage.Size = new System.Drawing.Size(107, 27);
@@ -65,44 +65,32 @@
             // 
             // pctrbx_SelectedImage
             // 
-            this.pctrbx_SelectedImage.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.pctrbx_SelectedImage.ImageLocation = "C:\\Users\\eliza\\Desktop\\pixil-frame-0.png";
-            this.pctrbx_SelectedImage.Location = new System.Drawing.Point(3, 16);
-            this.pctrbx_SelectedImage.Margin = new System.Windows.Forms.Padding(0);
-            this.pctrbx_SelectedImage.Name = "pctrbx_SelectedImage";
-            this.pctrbx_SelectedImage.Size = new System.Drawing.Size(278, 346);
-            this.pctrbx_SelectedImage.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.pctrbx_SelectedImage.TabIndex = 1;
-            this.pctrbx_SelectedImage.TabStop = false;
+            this.pctrbx_selectedImage.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.pctrbx_selectedImage.ImageLocation = "C:\\Users\\eliza\\Desktop\\pixil-frame-0.png";
+            this.pctrbx_selectedImage.Location = new System.Drawing.Point(3, 16);
+            this.pctrbx_selectedImage.Margin = new System.Windows.Forms.Padding(0);
+            this.pctrbx_selectedImage.Name = "pctrbx_SelectedImage";
+            this.pctrbx_selectedImage.Size = new System.Drawing.Size(278, 346);
+            this.pctrbx_selectedImage.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.pctrbx_selectedImage.TabIndex = 1;
+            this.pctrbx_selectedImage.TabStop = false;
             // 
             // btn_buildGraph
             // 
             this.btn_buildGraph.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btn_buildGraph.Location = new System.Drawing.Point(546, 1);
-            this.btn_buildGraph.Margin = new System.Windows.Forms.Padding(2, 0, 0, 0);
+            this.btn_buildGraph.Location = new System.Drawing.Point(659, 0);
+            this.btn_buildGraph.Margin = new System.Windows.Forms.Padding(0);
             this.btn_buildGraph.Name = "btn_buildGraph";
-            this.btn_buildGraph.Size = new System.Drawing.Size(104, 27);
+            this.btn_buildGraph.Size = new System.Drawing.Size(104, 29);
             this.btn_buildGraph.TabIndex = 3;
             this.btn_buildGraph.Text = "Build graph";
             this.btn_buildGraph.UseVisualStyleBackColor = true;
             this.btn_buildGraph.Click += new System.EventHandler(this.btn_buildGraph_Click);
             // 
-            // btn_calculateMaxFlow
-            // 
-            this.btn_calculateMaxFlow.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btn_calculateMaxFlow.Location = new System.Drawing.Point(652, 0);
-            this.btn_calculateMaxFlow.Margin = new System.Windows.Forms.Padding(2, 0, 0, 0);
-            this.btn_calculateMaxFlow.Name = "btn_calculateMaxFlow";
-            this.btn_calculateMaxFlow.Size = new System.Drawing.Size(111, 28);
-            this.btn_calculateMaxFlow.TabIndex = 4;
-            this.btn_calculateMaxFlow.Text = "Calculate max flow";
-            this.btn_calculateMaxFlow.UseVisualStyleBackColor = true;
-            this.btn_calculateMaxFlow.Click += new System.EventHandler(this.btn_calculateMaxFlow_Click);
-            // 
             // btn_printGraph
             // 
             this.btn_printGraph.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btn_printGraph.Location = new System.Drawing.Point(469, 0);
+            this.btn_printGraph.Location = new System.Drawing.Point(584, 1);
             this.btn_printGraph.Margin = new System.Windows.Forms.Padding(2, 0, 0, 0);
             this.btn_printGraph.Name = "btn_printGraph";
             this.btn_printGraph.Size = new System.Drawing.Size(75, 28);
@@ -111,25 +99,25 @@
             this.btn_printGraph.UseVisualStyleBackColor = true;
             this.btn_printGraph.Click += new System.EventHandler(this.btn_printGraph_Click);
             // 
-            // btn_segment
+            // btn_segmentBackground
             // 
-            this.btn_segment.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btn_segment.Location = new System.Drawing.Point(397, 0);
-            this.btn_segment.Margin = new System.Windows.Forms.Padding(2, 0, 0, 0);
-            this.btn_segment.Name = "btn_segment";
-            this.btn_segment.Size = new System.Drawing.Size(70, 28);
-            this.btn_segment.TabIndex = 6;
-            this.btn_segment.Text = "Segment";
-            this.btn_segment.UseVisualStyleBackColor = true;
-            this.btn_segment.Click += new System.EventHandler(this.btn_segment_Click);
+            this.btn_segmentBackground.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btn_segmentBackground.Location = new System.Drawing.Point(465, 1);
+            this.btn_segmentBackground.Margin = new System.Windows.Forms.Padding(2, 0, 0, 0);
+            this.btn_segmentBackground.Name = "btn_segmentBackground";
+            this.btn_segmentBackground.Size = new System.Drawing.Size(117, 28);
+            this.btn_segmentBackground.TabIndex = 6;
+            this.btn_segmentBackground.Text = "Show background";
+            this.btn_segmentBackground.UseVisualStyleBackColor = true;
+            this.btn_segmentBackground.Click += new System.EventHandler(this.btn_segmentBackground_Click);
             // 
             // flowLayoutPanel1
             // 
             this.flowLayoutPanel1.Controls.Add(this.btn_selectImage);
-            this.flowLayoutPanel1.Controls.Add(this.btn_calculateMaxFlow);
             this.flowLayoutPanel1.Controls.Add(this.btn_buildGraph);
             this.flowLayoutPanel1.Controls.Add(this.btn_printGraph);
-            this.flowLayoutPanel1.Controls.Add(this.btn_segment);
+            this.flowLayoutPanel1.Controls.Add(this.btn_segmentBackground);
+            this.flowLayoutPanel1.Controls.Add(this.btn_segmentObject);
             this.flowLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.flowLayoutPanel1.FlowDirection = System.Windows.Forms.FlowDirection.RightToLeft;
             this.flowLayoutPanel1.Location = new System.Drawing.Point(12, 427);
@@ -138,9 +126,20 @@
             this.flowLayoutPanel1.Size = new System.Drawing.Size(872, 29);
             this.flowLayoutPanel1.TabIndex = 9;
             // 
+            // btn_segmentObject
+            // 
+            this.btn_segmentObject.Location = new System.Drawing.Point(388, 0);
+            this.btn_segmentObject.Margin = new System.Windows.Forms.Padding(0);
+            this.btn_segmentObject.Name = "btn_segmentObject";
+            this.btn_segmentObject.Size = new System.Drawing.Size(75, 29);
+            this.btn_segmentObject.TabIndex = 7;
+            this.btn_segmentObject.Text = "Show object";
+            this.btn_segmentObject.UseVisualStyleBackColor = true;
+            this.btn_segmentObject.Click += new System.EventHandler(this.btn_segmentObject_Click);
+            // 
             // groupBox1
             // 
-            this.groupBox1.Controls.Add(this.pctrbx_SelectedImage);
+            this.groupBox1.Controls.Add(this.pctrbx_selectedImage);
             this.groupBox1.Location = new System.Drawing.Point(3, 3);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Size = new System.Drawing.Size(284, 365);
@@ -216,11 +215,11 @@
             this.ClientSize = new System.Drawing.Size(896, 468);
             this.Controls.Add(this.tableLayoutPanel1);
             this.Controls.Add(this.flowLayoutPanel1);
-            this.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "Main";
-            this.Padding = new System.Windows.Forms.Padding(12, 12, 12, 12);
+            this.Padding = new System.Windows.Forms.Padding(12);
             this.Text = "CutPro2000";
-            ((System.ComponentModel.ISupportInitialize)(this.pctrbx_SelectedImage)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pctrbx_selectedImage)).EndInit();
             this.flowLayoutPanel1.ResumeLayout(false);
             this.groupBox1.ResumeLayout(false);
             this.groupBox2.ResumeLayout(false);
@@ -235,11 +234,10 @@
         #endregion
 
         private System.Windows.Forms.Button btn_selectImage;
-        private System.Windows.Forms.PictureBox pctrbx_SelectedImage;
+        private System.Windows.Forms.PictureBox pctrbx_selectedImage;
         private System.Windows.Forms.Button btn_buildGraph;
-        private System.Windows.Forms.Button btn_calculateMaxFlow;
         private System.Windows.Forms.Button btn_printGraph;
-        private System.Windows.Forms.Button btn_segment;
+        private System.Windows.Forms.Button btn_segmentBackground;
         private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel1;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.GroupBox groupBox2;
@@ -247,6 +245,7 @@
         private System.Windows.Forms.GroupBox groupBox3;
         private System.Windows.Forms.PictureBox pctrbx_objectImage;
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
+        private System.Windows.Forms.Button btn_segmentObject;
     }
 }
 

@@ -23,9 +23,9 @@ namespace Graphs
 
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
                 {
-                    pctrbx_SelectedImage.ImageLocation = openFileDialog.FileName;
+                    pctrbx_selectedImage.ImageLocation = openFileDialog.FileName;
 
-                    var graphics = pctrbx_SelectedImage.CreateGraphics();
+                    var graphics = pctrbx_selectedImage.CreateGraphics();
 
                     graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.None;
                     graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
@@ -38,36 +38,32 @@ namespace Graphs
 
         private void btn_buildGraph_Click(object sender, EventArgs e)
         {
-            var segmentation = new Segmentation(new Bitmap(pctrbx_SelectedImage.Image));
+            var segmentation = new Segmentation(new Bitmap(pctrbx_selectedImage.Image), Segmentation.Target.Background);
 
             segmentation.isDebugLogEndabled = true;
-        }
-
-        private void btn_calculateMaxFlow_Click(object sender, EventArgs e)
-        {
-            var segmentation = new Segmentation(new Bitmap(pctrbx_SelectedImage.Image));
-
-            segmentation.isDebugLogEndabled = true;
-
-            MessageBox.Show(segmentation.GetMaxFlow().ToString());
         }
 
         private void btn_printGraph_Click(object sender, EventArgs e)
         {
-            var segmentation = new Segmentation(new Bitmap(pctrbx_SelectedImage.Image));
+            var segmentation = new Segmentation(new Bitmap(pctrbx_selectedImage.Image), Segmentation.Target.Background);
 
             Console.WriteLine(segmentation.GetStringifiedGraph());
         }
 
-        private void btn_segment_Click(object sender, EventArgs e)
+        private void btn_segmentBackground_Click(object sender, EventArgs e)
         {
-            var segmentation = new Segmentation(new Bitmap(pctrbx_SelectedImage.Image));
-
-            //segmentation.isDebugLogEndabled = true;
-
+            var segmentation = new Segmentation(new Bitmap(pctrbx_selectedImage.Image), Segmentation.Target.Background);
             var bitmap = segmentation.Cut();
 
             pctrbx_backgroundImage.Image = bitmap;
+        }
+
+        private void btn_segmentObject_Click(object sender, EventArgs e)
+        {
+            var segmentation = new Segmentation(new Bitmap(pctrbx_selectedImage.Image), Segmentation.Target.Object);
+            var bitmap = segmentation.Cut();
+
+            pctrbx_objectImage.Image = bitmap;
         }
     }
 }

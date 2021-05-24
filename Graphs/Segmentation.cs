@@ -20,6 +20,12 @@ namespace Graphs
             T = 1,
         }
 
+        public enum Target
+        {
+            Object = 0,
+            Background = 1,
+        }
+
         public class Edge
         {
             public double weight;
@@ -52,12 +58,14 @@ namespace Graphs
         // Segmentation
         private IntensityHistogram intensityHistogram;
         private double epsilon = 0.0000000001;
+        private Target target;
 
-        public Segmentation(Bitmap bitmap, NeighbourCount neighbourCount = NeighbourCount.Eight, int lambda = 100, double sigma = 1)
+        public Segmentation(Bitmap bitmap, Target target, NeighbourCount neighbourCount = NeighbourCount.Eight, int lambda = 100, double sigma = 1)
         {
             this.bitmap = bitmap;
             this.lambda = lambda;
             this.sigma = sigma;
+            this.target = target;
             intensityHistogram = new IntensityHistogram(bitmap);   
 
             CreateGraph(neighbourCount);
@@ -74,7 +82,7 @@ namespace Graphs
                 index = nodes.Count,
                 x = -1,
                 y = -1,
-                intensity = intensityHistogram.AverageObjectIntensityReferece, // object intensity reference value
+                intensity = target == Target.Background ? intensityHistogram.AverageBackgroundIntensityReferece : intensityHistogram.AverageObjectIntensityReferece,
                 error = Int32.MaxValue,
                 isTerminal = true,
                 terminal = Terminal.S,
@@ -82,6 +90,19 @@ namespace Graphs
             };
 
             nodes.Add(sTerminal);
+
+            var tTerminal = new Node
+            {
+                index = nodes.Count,
+                x = -1,
+                y = -1,
+                intensity = target == Target.Background ? intensityHistogram.AverageObjectIntensityReferece : intensityHistogram.AverageBackgroundIntensityReferece,
+                error = 0,
+                height = 0,
+                isTerminal = true,
+                terminal = Terminal.T,
+                neighbours = new List<int>(),
+            };
 
             for (var i = 0; i < bitmap.Width; i++)
             {
@@ -104,22 +125,9 @@ namespace Graphs
                 }
             }
 
-            sTerminal.height = nodes.Count;
-
-            var tTerminal = new Node
-            {
-                index = nodes.Count,
-                x = -1,
-                y = -1,
-                intensity = intensityHistogram.AverageBackgroundIntensityReference, // background intensity reference value
-                error = 0,
-                height = 0,
-                isTerminal = true,
-                terminal = Terminal.T,
-                neighbours = new List<int>(),
-            };
-
             nodes.Add(tTerminal);
+
+            sTerminal.height = nodes.Count;
 
             for (var index = 1; index < nodes.Count - 1; index++)
             {
