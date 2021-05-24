@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Reflection.Emit;
+using System.Runtime.Remoting.Metadata.W3cXsd2001;
 using System.Text;
 using System.Windows.Forms;
 
@@ -11,6 +12,9 @@ namespace Graphs
     class IntensityHistogram
     {
         public int[] histogram;
+
+        private double averageObjectIntensityReference;
+        private double averageBackgroundIntensityReference;
 
         public IntensityHistogram(Bitmap bitmap)
         {
@@ -26,60 +30,140 @@ namespace Graphs
                     histogram[normalizedIntensity] += 1;
                 }
             }
+
+            GetDefaultSeedsValues();
         }
 
-        public int GetPixelHistogramIntensityValue(int intensity)
-        {
-            if (intensity > 255 || intensity < 0)
-            {
-                throw new Exception("Intensity must be in range [0, 255]");
-            }
-
-            return histogram[intensity];
-        }
-
-        public int MaximumDistributionIntensity
+        public double AverageObjectIntensityReferece
         {
             get
             {
-                return 90;
-                
-                int maximum = -1;
-                int intensity = -1;
-
-                for (var i = 0; i < histogram.Length; i++)
-                {
-                    if (maximum < histogram[i])
-                    {
-                        maximum = histogram[i];
-                        intensity = i;
-                    }
-                }
-
-                return intensity;
+                return averageObjectIntensityReference;
             }
         }
 
-        public int MinimumDistributionIntensity
-        {
+        public double AverageBackgroundIntensityReference
+        { 
             get
             {
-                return 19;
+                return averageBackgroundIntensityReference;
+            }
+        }
 
-                int minimum = 256;
-                int intensity = -1;
+        private void GetDefaultSeedsValues()
+        {
+            averageObjectIntensityReference = 0;
+            averageBackgroundIntensityReference = 0;
+            
+            int[] backwardIndexMap = new int[256];
 
-                for (var i = 0; i < histogram.Length; i++)
+            for (var i = 0; i < 256; i++)
+            {
+                backwardIndexMap[i] = i;
+            }
+
+            var sortedHistogram = QuickSort(histogram.ToArray(), backwardIndexMap);
+
+            int maxDiff = 0;
+            int maxDiffIndex = -1;
+
+            for (var i = 0; i < 255; i++)
+            {
+                var diff = sortedHistogram[i + 1] - sortedHistogram[i];
+
+                if (maxDiff < diff)
                 {
-                    if (minimum > histogram[i])
+                    maxDiff = diff;
+                    maxDiffIndex = i;
+                }
+            }
+
+            int objectIntensityPartitionLength = 0;
+            int backgroundIntensityPartitionLength = 0;
+            bool isLeftPartitionSmaller = maxDiffIndex < 127;
+
+            for (var i = 0; i < 256; i++)
+            {
+                if (histogram[backwardIndexMap[i]] > 0)
+                {
+                    if (isLeftPartitionSmaller)
                     {
-                        minimum = histogram[i];
-                        intensity = i;
+                        if (i < maxDiffIndex)
+                        {
+                            averageObjectIntensityReference += backwardIndexMap[i];
+                            objectIntensityPartitionLength += 1;
+                        }
+                        else
+                        {
+                            averageBackgroundIntensityReference += backwardIndexMap[i];
+                            backgroundIntensityPartitionLength += 1;
+                        }
+                    }
+                    else
+                    {
+                        if (i < maxDiffIndex)
+                        {
+                            averageBackgroundIntensityReference += backwardIndexMap[i];
+                            backgroundIntensityPartitionLength += 1;
+                        }
+                        else
+                        {
+                            averageObjectIntensityReference += backwardIndexMap[i];
+                            objectIntensityPartitionLength += 1;
+                        }
                     }
                 }
-
-                return intensity;
             }
+
+            averageObjectIntensityReference /= objectIntensityPartitionLength;
+            averageBackgroundIntensityReference /= backgroundIntensityPartitionLength;
+
+            MessageBox.Show(averageObjectIntensityReference + " " + averageBackgroundIntensityReference);
+        }
+
+        static void Swap(ref int x, ref int y)
+        {
+            var t = x;
+            x = y;
+            y = t;
+        }
+
+        static int Partition(int[] array, int minIndex, int maxIndex, int[] indexMap)
+        {
+            var pivot = minIndex - 1;
+            for (var i = minIndex; i < maxIndex; i++)
+            {
+                if (array[i] < array[maxIndex])
+                {
+                    pivot++;
+                    Swap(ref indexMap[pivot], ref indexMap[i]);
+                    Swap(ref array[pivot], ref array[i]);
+                }
+            }
+
+            pivot++;
+            Swap(ref indexMap[pivot], ref indexMap[maxIndex]);
+            Swap(ref array[pivot], ref array[maxIndex]);
+            return pivot;
+        }
+
+        static int[] QuickSort(int[] array, int minIndex, int maxIndex, int[] indexMap)
+        {
+            if (minIndex >= maxIndex)
+            {
+                return array;
+            }
+
+            var pivotIndex = Partition(array, minIndex, maxIndex, indexMap);
+            QuickSort(array, minIndex, pivotIndex - 1, indexMap);
+            QuickSort(array, pivotIndex + 1, maxIndex, indexMap);
+
+            return array;
+        }
+
+        static int[] QuickSort(int[] array, int[] indexMap)
+        {
+            return QuickSort(array, 0, array.Length - 1, indexMap);
         }
     }
 }

@@ -23,7 +23,6 @@ namespace Graphs
         public class Edge
         {
             public double weight;
-            // public double flow;
         }
 
         public class Node
@@ -62,8 +61,6 @@ namespace Graphs
             intensityHistogram = new IntensityHistogram(bitmap);   
 
             CreateGraph(neighbourCount);
-
-            MessageBox.Show("Graph created");
         }
 
         public void CreateGraph(NeighbourCount neighbourCount)
@@ -77,7 +74,7 @@ namespace Graphs
                 index = nodes.Count,
                 x = -1,
                 y = -1,
-                intensity = intensityHistogram.MinimumDistributionIntensity, // object intensity reference value
+                intensity = intensityHistogram.AverageObjectIntensityReferece, // object intensity reference value
                 error = Int32.MaxValue,
                 isTerminal = true,
                 terminal = Terminal.S,
@@ -114,7 +111,7 @@ namespace Graphs
                 index = nodes.Count,
                 x = -1,
                 y = -1,
-                intensity = intensityHistogram.MaximumDistributionIntensity, // background intensity reference value
+                intensity = intensityHistogram.AverageBackgroundIntensityReference, // background intensity reference value
                 error = 0,
                 height = 0,
                 isTerminal = true,
@@ -204,8 +201,6 @@ namespace Graphs
             }
             start.error = 0;
 
-            MessageBox.Show("Initial nodes added to queue");
-
             while (queue.Count != 0)
             {
                 Node node = queue.Dequeue();
@@ -222,11 +217,9 @@ namespace Graphs
             {
                 Edge edge;
                 bool isEdgeExist = edges.TryGetValue(GetEdgeKey(nodes.Count - 1, i), out edge);
-                // bool isEdgeExist = edges.TryGetValue(GetEdgeKey(i, nodes.Count - 1), out edge);
 
                 if (isEdgeExist)
                 {
-                    // maxFlow += edge.flow;
                     maxFlow += edge.weight;
                 }
             }
@@ -237,8 +230,6 @@ namespace Graphs
         public Bitmap Cut()
         {
             GetMaxFlow();
-
-            MessageBox.Show("Max flow found");
 
             List<Node> cut = new List<Node>();
             Queue<Node> queue = new Queue<Node>();
@@ -271,8 +262,6 @@ namespace Graphs
                 }
             }
 
-            MessageBox.Show("Minimum Cut found, drawing bitmap...");
-
             Bitmap segmentatedImageBitmap = new Bitmap(bitmap);
 
             for (var i = 0; i < cut.Count; i++)
@@ -300,16 +289,13 @@ namespace Graphs
 
             if (isEdgeExist)
             {
-                //double flow = Math.Min(from.error, edge.weight - edge.flow);
                 double flow = Math.Min(from.error, edge.weight);
 
 
                 Edge reverseEdge;
                 edges.TryGetValue(GetEdgeKey(to.index, from.index), out reverseEdge);
 
-                //reverseEdge.flow -= flow;
                 reverseEdge.weight += flow;
-                //edge.flow += flow;
                 edge.weight -= flow;
                 from.error -= flow;
                 to.error += flow;
@@ -358,7 +344,6 @@ namespace Graphs
 
                 if (isEdgeExist)
                 {
-                    // if (Math.Abs(edge.weight - edge.flow) > epsilon)
                     if (edge.weight > epsilon)
                     {
                         minHeight = Math.Min(minHeight, nodes[node.neighbours[i]].height);
