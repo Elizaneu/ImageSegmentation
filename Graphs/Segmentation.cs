@@ -53,7 +53,7 @@ namespace Graphs
         private IntensityHistogram intensityHistogram;
         private double epsilon = 0.0000000001;
 
-        public Segmentation(Bitmap bitmap, NeighbourCount neighbourCount = NeighbourCount.Eight, int lambda = 40, double sigma = 0.5)
+        public Segmentation(Bitmap bitmap, NeighbourCount neighbourCount = NeighbourCount.Eight, int lambda = 100, double sigma = 1)
         {
             this.bitmap = bitmap;
             this.lambda = lambda;
