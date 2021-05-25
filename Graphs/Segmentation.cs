@@ -63,6 +63,7 @@ namespace Graphs
         // Graph properties
         private List<Node> nodes;
         private Dictionary<string, Edge> edges;
+        private double maxEdgeWeight;
 
         // Common and service
         private readonly Bitmap bitmap;
@@ -99,6 +100,8 @@ namespace Graphs
                     objectSeedsHashSet.Add("" + objectSeeds[i].X + objectSeeds[i].Y);
                 }
             }
+
+            maxEdgeWeight = -1;
 
             CreateGraph(NeighbourCount.Eight);
         }
@@ -292,7 +295,14 @@ namespace Graphs
                         }
                     }
                 }
+            }
 
+            maxEdgeWeight = GetMaxEdgeWeight();
+
+            for (var i = 1; i < nodes.Count - 1; i++)
+            {
+                var node = nodes[i];
+                
                 node.neighbours.Add(nodes.Count - 1);
                 node.neighbours.Add(0);
                 nodes[0].neighbours.Add(node.index);
@@ -436,7 +446,7 @@ namespace Graphs
 
                     if (backgroundSeedsHashSet != null && backgroundSeedsHashSet.Contains(GetNodeKey(pixelNode.x, pixelNode.y)))
                     {
-                        return lambda; // TODO: return K
+                        return maxEdgeWeight;
                     }
                 }
 
@@ -444,7 +454,7 @@ namespace Graphs
                 {
                     if (objectSeedsHashSet != null && objectSeedsHashSet.Contains(GetNodeKey(pixelNode.x, pixelNode.y)))
                     {
-                        return lambda; // TODO: return K
+                        return maxEdgeWeight;
                     }
 
                     if (backgroundSeedsHashSet != null && backgroundSeedsHashSet.Contains(GetNodeKey(pixelNode.x, pixelNode.y)))
@@ -479,6 +489,34 @@ namespace Graphs
                     return weight;
                 }
             }
+        }
+
+        private double GetMaxEdgeWeight()
+        {
+            double maxWeight = -1;
+            
+            for (var i = 1; i < nodes.Count - 1; i++)
+            {
+                var node = nodes[i];
+
+                for (var j = 0; j < node.neighbours.Count; j++)
+                {
+                    var neighbour = nodes[node.neighbours[j]];
+
+                    if (!neighbour.isTerminal)
+                    {
+                        Edge edge;
+                        edges.TryGetValue(GetEdgeKey(node.index, neighbour.index), out edge);
+
+                        if (maxWeight < edge.weight)
+                        {
+                            maxWeight = edge.weight;
+                        }
+                    }
+                }
+            }
+
+            return maxWeight;
         }
 
         private Node GetNodeNeighbour(int nodeIndex, int offsetI, int offsetJ)
