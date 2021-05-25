@@ -16,12 +16,6 @@ namespace Graphs
             T = 1,
         }
 
-        public enum Target
-        {
-            Object = 0,
-            Background = 1,
-        }
-
         private enum NeighbourCount
         {
             Four = 4,
@@ -53,8 +47,7 @@ namespace Graphs
         private readonly double epsilon = 0.0000000001;
         private readonly int lambda;
         private readonly double sigma;
-        private readonly Target target;
-        private readonly IntensityHistogram fullintensityHistogram;
+        private readonly IntensityHistogram fullIntensityHistogram;
         private readonly IntensityHistogram backgroundSeedsIntensityHistogram;
         private readonly IntensityHistogram objectSeedsIntensityHistogram;
         private readonly HashSet<string> backgroundSeedsHashSet;
@@ -63,26 +56,25 @@ namespace Graphs
         // Graph properties
         private List<Node> nodes;
         private Dictionary<string, Edge> edges;
-        private double maxEdgeWeight;
+        private double maxNeighbourhoodEdgesWeightSum;
 
         // Common and service
         private readonly Bitmap bitmap;
         public bool isDebugLogEndabled;
 
 
-        public Segmentation(Bitmap bitmap, Target target, Point[] backgroundSeeds = null, Point[] objectSeeds = null, int lambda = 100, double sigma = 1)
+        public Segmentation(Bitmap bitmap, Point[] backgroundSeeds = null, Point[] objectSeeds = null, int lambda = 100, double sigma = 1)
         {
             this.bitmap = bitmap;
             this.lambda = lambda;
             this.sigma = sigma;
-            this.target = target;
 
-            fullintensityHistogram = new IntensityHistogram(bitmap);
+            fullIntensityHistogram = new IntensityHistogram(bitmap);
             
             if (backgroundSeeds != null && backgroundSeeds.Length > 0)
             {
                 backgroundSeedsIntensityHistogram = GetIntensityHistogramFromSeeds(backgroundSeeds);
-
+                
                 backgroundSeedsHashSet = new HashSet<string>();
                 for (var i = 0; i < backgroundSeeds.Length; i++)
                 {
@@ -101,7 +93,7 @@ namespace Graphs
                 }
             }
 
-            maxEdgeWeight = -1;
+            maxNeighbourhoodEdgesWeightSum = -1;
 
             CreateGraph(NeighbourCount.Eight);
         }
@@ -123,7 +115,7 @@ namespace Graphs
         public double GetMaxFlow()
         {
             Queue<Node> queue = new Queue<Node>();
-            Node start = nodes[nodes.Count - 1];
+            Node start = nodes[0];
 
             for (var i = 0; i < start.neighbours.Count; i++)
             {
@@ -192,7 +184,15 @@ namespace Graphs
                 }
             }
 
-            Bitmap segmentatedImageBitmap = new Bitmap(bitmap);
+            Bitmap segmentatedImageBitmap = new Bitmap(bitmap.Width, bitmap.Height);
+
+            for (var i = 0; i < bitmap.Width; i++)
+            {
+                for (var j = 0; j <bitmap.Height; j++)
+                {
+                    segmentatedImageBitmap.SetPixel(i, j, Color.White);
+                }
+            }
 
             for (var i = 0; i < cut.Count; i++)
             {
@@ -200,9 +200,7 @@ namespace Graphs
 
                 if (!node.isTerminal)
                 {
-                    var color = target == Target.Background ? Color.FromArgb(100, 100, 200) : Color.FromArgb(200, 100, 100);
-
-                    segmentatedImageBitmap.SetPixel(node.x, node.y, color);
+                    segmentatedImageBitmap.SetPixel(node.x, node.y, Color.Black);
                 }
             }
 
@@ -220,8 +218,9 @@ namespace Graphs
                 index = nodes.Count,
                 x = -1,
                 y = -1,
-                intensity = target == Target.Background ? fullintensityHistogram.AverageBackgroundIntensity : fullintensityHistogram.AverageObjectIntensity,
-                error = Int32.MaxValue,
+                intensity = fullIntensityHistogram.AverageBackgroundIntensity,
+                height = 0,
+                error = 0,
                 isTerminal = true,
                 terminal = Terminal.S,
                 neighbours = new List<int>(),
@@ -234,9 +233,8 @@ namespace Graphs
                 index = nodes.Count,
                 x = -1,
                 y = -1,
-                intensity = target == Target.Background ? fullintensityHistogram.AverageObjectIntensity : fullintensityHistogram.AverageBackgroundIntensity,
-                error = 0,
-                height = 0,
+                intensity = fullIntensityHistogram.AverageObjectIntensity,
+                error = Int32.MaxValue,
                 isTerminal = true,
                 terminal = Terminal.T,
                 neighbours = new List<int>(),
@@ -265,7 +263,7 @@ namespace Graphs
 
             nodes.Add(tTerminal);
 
-            sTerminal.height = nodes.Count;
+            tTerminal.height = nodes.Count;
 
             for (var index = 1; index < nodes.Count - 1; index++)
             {
@@ -297,7 +295,7 @@ namespace Graphs
                 }
             }
 
-            maxEdgeWeight = GetMaxEdgeWeight();
+            maxNeighbourhoodEdgesWeightSum = GetMaxNeighbhourhoodEdgesWeightSum();
 
             for (var i = 1; i < nodes.Count - 1; i++)
             {
@@ -409,35 +407,26 @@ namespace Graphs
 
         private double GetEdgeWeight(Node from, Node to)
         {
-            int multiplier = 100;
+            int multiplier = 255;
             
             // n-links weight
             if (!from.isTerminal && !to.isTerminal)
             {
                 var delta = Math.Pow(from.intensity - to.intensity, 2);
-                var weight = Math.Exp(-1 * delta / (2 * Math.Pow(sigma, 2)));
+                var dist = Math.Sqrt(Math.Pow(from.x - to.x, 2) + Math.Pow(from.y - to.y, 2));
+                var weight = Math.Exp(-1 * delta / (2 * Math.Pow(sigma, 2)))/dist;
 
-                return (int)(weight * multiplier);
+                return (int)(multiplier*weight);
             }
             // t-links weight
             else
             {
                 // Calculate weight if pixel node relates to one of the seeds
-                var terminalNode = from.isTerminal
-                    ? from
-                    : to;
                 var pixelNode = from.isTerminal
                     ? to
                     : from;
 
-                var backgroundTerminalType = target == Target.Background
-                    ? Terminal.S
-                    : Terminal.T;
-                var objectTerminalType = target == Target.Object
-                    ? Terminal.T
-                    : Terminal.S;
-
-                if (terminalNode.terminal == backgroundTerminalType)
+                if (from.isTerminal)
                 {
                     if (objectSeedsHashSet != null && objectSeedsHashSet.Contains(GetNodeKey(pixelNode.x, pixelNode.y)))
                     {
@@ -446,15 +435,15 @@ namespace Graphs
 
                     if (backgroundSeedsHashSet != null && backgroundSeedsHashSet.Contains(GetNodeKey(pixelNode.x, pixelNode.y)))
                     {
-                        return maxEdgeWeight;
+                        return maxNeighbourhoodEdgesWeightSum;
                     }
                 }
 
-                if (terminalNode.terminal == objectTerminalType)
+                if (to.isTerminal)
                 {
                     if (objectSeedsHashSet != null && objectSeedsHashSet.Contains(GetNodeKey(pixelNode.x, pixelNode.y)))
                     {
-                        return maxEdgeWeight;
+                        return maxNeighbourhoodEdgesWeightSum;
                     }
 
                     if (backgroundSeedsHashSet != null && backgroundSeedsHashSet.Contains(GetNodeKey(pixelNode.x, pixelNode.y)))
@@ -464,40 +453,34 @@ namespace Graphs
                 }
 
                 // Calculate weight, pixel does not relate to one of the seeds
-                var fromTerminalHistogram = target == Target.Background
-                    ? backgroundSeedsIntensityHistogram
-                    : objectSeedsIntensityHistogram;
-                var toTerminalHistogram = target == Target.Background
-                    ? objectSeedsIntensityHistogram
-                    : backgroundSeedsIntensityHistogram;
-
-                if (from.isTerminal && fromTerminalHistogram == null || to.isTerminal && toTerminalHistogram == null)
+                if (from.isTerminal && backgroundSeedsIntensityHistogram == null || to.isTerminal && objectSeedsIntensityHistogram == null)
                 {
                     var delta = Math.Pow(from.intensity - to.intensity, 2);
-                    var weight = (int)(lambda * Math.Exp(-1 * delta / 2) * multiplier);
+                    var weight = (int)(multiplier * lambda * Math.Exp(-1 * delta / 2));
 
                     return weight;
                 } else
                 {
                     var histogram = from.isTerminal
-                    ? fromTerminalHistogram
-                    : toTerminalHistogram;
+                        ? backgroundSeedsIntensityHistogram
+                        : objectSeedsIntensityHistogram;
 
-                    var delta = -1 * Math.Log(histogram.GetIntensityProbability(to.intensity));
-                    var weight = (int)(lambda * delta * multiplier);
+                    var delta = -1 * Math.Log(histogram.GetIntensityProbability(pixelNode.intensity));
+                    var weight = (int)(multiplier * lambda * delta);
 
                     return weight;
                 }
             }
         }
 
-        private double GetMaxEdgeWeight()
+        private double GetMaxNeighbhourhoodEdgesWeightSum()
         {
-            double maxWeight = -1;
+            double maxWeightSum = -1;
             
             for (var i = 1; i < nodes.Count - 1; i++)
             {
                 var node = nodes[i];
+                double neighbourhoodWeighSum = 0;
 
                 for (var j = 0; j < node.neighbours.Count; j++)
                 {
@@ -508,15 +491,17 @@ namespace Graphs
                         Edge edge;
                         edges.TryGetValue(GetEdgeKey(node.index, neighbour.index), out edge);
 
-                        if (maxWeight < edge.weight)
-                        {
-                            maxWeight = edge.weight;
-                        }
+                        neighbourhoodWeighSum += edge.weight;
                     }
+                }
+
+                if (maxWeightSum < neighbourhoodWeighSum)
+                {
+                    maxWeightSum = neighbourhoodWeighSum;
                 }
             }
 
-            return maxWeight;
+            return maxWeightSum + 1;
         }
 
         private Node GetNodeNeighbour(int nodeIndex, int offsetI, int offsetJ)

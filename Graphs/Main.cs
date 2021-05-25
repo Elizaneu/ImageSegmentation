@@ -93,33 +93,16 @@ namespace Graphs
         /** 
          * Find and print background
          * **/
-        private void btn_segmentBackground_Click(object sender, EventArgs e)
+        private void btn_segmentize_Click(object sender, EventArgs e)
         {
             var segmentation = new Segmentation(
                 new Bitmap(pctrbx_selectedImage.Image),
-                Segmentation.Target.Background,
                 GetSeeds(backgroundSeedSelectionRegion),
                 GetSeeds(objectSeedSelectionRegion)
             );
             var bitmap = segmentation.Cut();
 
             pctrbx_backgroundImage.Image = bitmap;
-        }
-
-        /** 
-         * Find and print object
-         * **/
-        private void btn_segmentObject_Click(object sender, EventArgs e)
-        {
-            var segmentation = new Segmentation(
-                new Bitmap(pctrbx_selectedImage.Image),
-                Segmentation.Target.Object,
-                GetSeeds(backgroundSeedSelectionRegion),
-                GetSeeds(objectSeedSelectionRegion)
-            );
-            var bitmap = segmentation.Cut();
-
-            pctrbx_objectImage.Image = bitmap;
         }
 
         /** 
