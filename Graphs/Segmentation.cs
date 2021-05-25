@@ -36,7 +36,7 @@ namespace Graphs
             public int index;
             public int x;
             public int y;
-            public double intensity;
+            public int intensity;
 
             public double error;
             public int height;
@@ -278,9 +278,9 @@ namespace Graphs
 
                 if (!node.isTerminal)
                 {
-                    var pixel = bitmap.GetPixel(node.x, node.y);
+                    var color = target == Target.Background ? Color.FromArgb(100, 100, 200) : Color.FromArgb(200, 100, 100);
 
-                    segmentatedImageBitmap.SetPixel(node.x, node.y, Color.FromArgb(100, 100, 200));
+                    segmentatedImageBitmap.SetPixel(node.x, node.y, color);
                 }
             }
 

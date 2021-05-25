@@ -1,20 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using System.Reflection.Emit;
-using System.Runtime.Remoting.Metadata.W3cXsd2001;
-using System.Text;
-using System.Windows.Forms;
 
 namespace Graphs
 {
     class IntensityHistogram
     {
-        public int[] histogram;
+        private int[] histogram;
+        private int totalPixelsCount;
 
         public IntensityHistogram(Bitmap bitmap)
         {
+            totalPixelsCount = bitmap.Width * bitmap.Height;
             histogram = new int[256];
 
             for (var i = 0; i < bitmap.Width; i++)
@@ -31,9 +28,14 @@ namespace Graphs
             GetDefaultSeedsValues();
         }
 
-        public double AverageBackgroundIntensityReferece { get; private set; }
+        public int AverageBackgroundIntensityReferece { get; private set; }
 
-        public double AverageObjectIntensityReferece { get; private set; }
+        public int AverageObjectIntensityReferece { get; private set; }
+
+        public double GetIntensityProbability(int intensity, int intensityBase)
+        {
+            return histogram[intensity] / histogram[intensityBase];
+        }
 
         private void GetDefaultSeedsValues()
         {
@@ -63,8 +65,8 @@ namespace Graphs
                 }
             }
 
-            int objectIntensityPartitionLength = 0;
             int backgroundIntensityPartitionLength = 0;
+            int objectIntensityPartitionLength = 0;
             bool isLeftPartitionSmaller = maxDiffIndex < 127;
 
             for (var i = 0; i < 256; i++)
@@ -76,12 +78,12 @@ namespace Graphs
                         if (i < maxDiffIndex)
                         {
                             AverageBackgroundIntensityReferece += backwardIndexMap[i];
-                            objectIntensityPartitionLength += 1;
+                            backgroundIntensityPartitionLength += 1;
                         }
                         else
                         {
                             AverageObjectIntensityReferece += backwardIndexMap[i];
-                            backgroundIntensityPartitionLength += 1;
+                            objectIntensityPartitionLength += 1;
                         }
                     }
                     else
@@ -89,19 +91,19 @@ namespace Graphs
                         if (i < maxDiffIndex)
                         {
                             AverageObjectIntensityReferece += backwardIndexMap[i];
-                            backgroundIntensityPartitionLength += 1;
+                            objectIntensityPartitionLength += 1;
                         }
                         else
                         {
                             AverageBackgroundIntensityReferece += backwardIndexMap[i];
-                            objectIntensityPartitionLength += 1;
+                            backgroundIntensityPartitionLength += 1;
                         }
                     }
                 }
             }
 
-            AverageBackgroundIntensityReferece /= objectIntensityPartitionLength;
-            AverageObjectIntensityReferece /= backgroundIntensityPartitionLength;
+            AverageBackgroundIntensityReferece = (int)Math.Round((double)(AverageBackgroundIntensityReferece / backgroundIntensityPartitionLength));
+            AverageObjectIntensityReferece = (int)Math.Round((double)(AverageObjectIntensityReferece / objectIntensityPartitionLength));
         }
 
         static void Swap(ref int x, ref int y)
