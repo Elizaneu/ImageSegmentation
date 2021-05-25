@@ -28,6 +28,11 @@ namespace Graphs
         // Drawing surface to image bitmap transformation
         private double zoom;
 
+        // Properties
+        private int lambda = Segmentation.LABMDA;
+        private double sigma = Segmentation.SIGMA;
+        private int scale = Segmentation.SCALE;
+
         public Main()
         {
             InitializeComponent();
@@ -37,6 +42,10 @@ namespace Graphs
 
             inpt_backgroundBrushSize.Value = cursorSize;
             inpt_objectBrushSize.Value = cursorSize;
+
+            inpt_lambda.Text = "" + lambda;
+            inpt_sigma.Text = "" + sigma;
+            inpt_scale.Text = "" + scale;
         }
 
         /** ### INITALIZATION ### **/
@@ -98,7 +107,10 @@ namespace Graphs
             var segmentation = new Segmentation(
                 new Bitmap(pctrbx_selectedImage.Image),
                 GetSeeds(backgroundSeedSelectionRegion),
-                GetSeeds(objectSeedSelectionRegion)
+                GetSeeds(objectSeedSelectionRegion),
+                lambda,
+                sigma,
+                scale
             );
             var bitmap = segmentation.Cut();
 
@@ -136,6 +148,34 @@ namespace Graphs
             }
 
             return seeds.ToArray();
+        }
+
+        private void ClearSeedSelectionRegion(byte[,] seedSelectionRegion)
+        {
+            for (var i = 0; i < seedSelectionRegion.GetLength(0); i++)
+            {
+                for (var j = 0; j < seedSelectionRegion.GetLength(1); j++)
+                {
+                    seedSelectionRegion[i, j] = 0;
+                }
+            }
+        }
+
+        /** READ SEGMENTATION PROPPERTIES FROM USER **/
+
+        private void inpt_lambda_TextChanged(object sender, EventArgs e)
+        {
+            lambda = Int32.Parse(inpt_lambda.Text);
+        }
+
+        private void inpt_sigma_TextChanged(object sender, EventArgs e)
+        {
+            sigma = Double.Parse(inpt_sigma.Text);
+        }
+
+        private void inpt_scale_TextChanged(object sender, EventArgs e)
+        {
+            scale = Int32.Parse(inpt_scale.Text);
         }
 
         /** ### DRAWAING SEED SELECTION REGIONS AND BRUSH SETTINGS **/
@@ -316,6 +356,16 @@ namespace Graphs
         private void inpt_objectBrushSize_ValueChanged(object sender, EventArgs e)
         {
             cursorSize = (int)inpt_objectBrushSize.Value;
+        }
+
+        private void btn_clearBackgroundSeed_Click(object sender, EventArgs e)
+        {
+            ClearSeedSelectionRegion(backgroundSeedSelectionRegion);
+        }
+
+        private void btn_clearObjectSeed_Click(object sender, EventArgs e)
+        {
+            ClearSeedSelectionRegion(objectSeedSelectionRegion);
         }
     }
 }

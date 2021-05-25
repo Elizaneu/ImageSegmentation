@@ -8,6 +8,10 @@ namespace Graphs
 {
     class Segmentation
     {
+        public const int LABMDA = 50;
+        public const double SIGMA = 0.5;
+        public const int SCALE = 20;
+
         // Types
         public enum Terminal
         {
@@ -44,9 +48,10 @@ namespace Graphs
         }
 
         // Segmenations properites
-        private readonly double epsilon = 0.0000000001;
+        private readonly double epsilon = 0.000000001;
         private readonly int lambda;
         private readonly double sigma;
+        private readonly int scale;
         private readonly IntensityHistogram fullIntensityHistogram;
         private readonly IntensityHistogram backgroundSeedsIntensityHistogram;
         private readonly IntensityHistogram objectSeedsIntensityHistogram;
@@ -63,11 +68,12 @@ namespace Graphs
         public bool isDebugLogEndabled;
 
 
-        public Segmentation(Bitmap bitmap, Point[] backgroundSeeds = null, Point[] objectSeeds = null, int lambda = 100, double sigma = 1)
+        public Segmentation(Bitmap bitmap, Point[] backgroundSeeds = null, Point[] objectSeeds = null, int lambda = LABMDA, double sigma = SIGMA, int scale = SCALE)
         {
             this.bitmap = bitmap;
             this.lambda = lambda;
             this.sigma = sigma;
+            this.scale = scale;
 
             fullIntensityHistogram = new IntensityHistogram(bitmap);
             
@@ -115,7 +121,7 @@ namespace Graphs
         public double GetMaxFlow()
         {
             Queue<Node> queue = new Queue<Node>();
-            Node start = nodes[0];
+            Node start = nodes[nodes.Count - 1];
 
             for (var i = 0; i < start.neighbours.Count; i++)
             {
@@ -157,6 +163,7 @@ namespace Graphs
             Queue<Node> queue = new Queue<Node>();
             bool[] isVisited = new bool[nodes.Count];
 
+            //queue.Enqueue(nodes[nodes.Count - 1]);
             queue.Enqueue(nodes[0]);
 
             while (queue.Count != 0)
@@ -188,7 +195,7 @@ namespace Graphs
 
             for (var i = 0; i < bitmap.Width; i++)
             {
-                for (var j = 0; j <bitmap.Height; j++)
+                for (var j = 0; j < bitmap.Height; j++)
                 {
                     segmentatedImageBitmap.SetPixel(i, j, Color.White);
                 }
@@ -219,8 +226,7 @@ namespace Graphs
                 x = -1,
                 y = -1,
                 intensity = fullIntensityHistogram.AverageBackgroundIntensity,
-                height = 0,
-                error = 0,
+                error = Int32.MaxValue,
                 isTerminal = true,
                 terminal = Terminal.S,
                 neighbours = new List<int>(),
@@ -234,7 +240,8 @@ namespace Graphs
                 x = -1,
                 y = -1,
                 intensity = fullIntensityHistogram.AverageObjectIntensity,
-                error = Int32.MaxValue,
+                height = 0,
+                error = 0,
                 isTerminal = true,
                 terminal = Terminal.T,
                 neighbours = new List<int>(),
@@ -263,7 +270,7 @@ namespace Graphs
 
             nodes.Add(tTerminal);
 
-            tTerminal.height = nodes.Count;
+            sTerminal.height = nodes.Count;
 
             for (var index = 1; index < nodes.Count - 1; index++)
             {
@@ -407,16 +414,16 @@ namespace Graphs
 
         private double GetEdgeWeight(Node from, Node to)
         {
-            int multiplier = 255;
+            int multiplier = scale;
             
             // n-links weight
             if (!from.isTerminal && !to.isTerminal)
             {
                 var delta = Math.Pow(from.intensity - to.intensity, 2);
                 var dist = Math.Sqrt(Math.Pow(from.x - to.x, 2) + Math.Pow(from.y - to.y, 2));
-                var weight = Math.Exp(-1 * delta / (2 * Math.Pow(sigma, 2)))/dist;
+                var weight = Math.Exp(-1 * delta / (2 * Math.Pow(sigma, 2))) / dist;
 
-                return (int)(multiplier*weight);
+                return (multiplier*weight);
             }
             // t-links weight
             else
@@ -454,9 +461,9 @@ namespace Graphs
 
                 // Calculate weight, pixel does not relate to one of the seeds
                 if (from.isTerminal && backgroundSeedsIntensityHistogram == null || to.isTerminal && objectSeedsIntensityHistogram == null)
-                {
+                {                    
                     var delta = Math.Pow(from.intensity - to.intensity, 2);
-                    var weight = (int)(multiplier * lambda * Math.Exp(-1 * delta / 2));
+                    var weight = (multiplier * lambda * Math.Exp(-1 * delta / 2));
 
                     return weight;
                 } else
@@ -466,7 +473,7 @@ namespace Graphs
                         : objectSeedsIntensityHistogram;
 
                     var delta = -1 * Math.Log(histogram.GetIntensityProbability(pixelNode.intensity));
-                    var weight = (int)(multiplier * lambda * delta);
+                    var weight = (multiplier * lambda * delta);
 
                     return weight;
                 }
