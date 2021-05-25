@@ -15,7 +15,7 @@ namespace Graphs
         };
 
         // Cursor
-        private readonly Queue<Point> cursorQueue;
+        private readonly Queue<Point> cursorQueue; 
         private int cursorSize = 10;
         private bool isDrawing;
 
@@ -95,7 +95,12 @@ namespace Graphs
          * **/
         private void btn_segmentBackground_Click(object sender, EventArgs e)
         {
-            var segmentation = new Segmentation(new Bitmap(pctrbx_selectedImage.Image), Segmentation.Target.Background);
+            var segmentation = new Segmentation(
+                new Bitmap(pctrbx_selectedImage.Image),
+                Segmentation.Target.Background,
+                GetSeeds(backgroundSeedSelectionRegion),
+                GetSeeds(objectSeedSelectionRegion)
+            );
             var bitmap = segmentation.Cut();
 
             pctrbx_backgroundImage.Image = bitmap;
@@ -106,10 +111,48 @@ namespace Graphs
          * **/
         private void btn_segmentObject_Click(object sender, EventArgs e)
         {
-            var segmentation = new Segmentation(new Bitmap(pctrbx_selectedImage.Image), Segmentation.Target.Object);
+            var segmentation = new Segmentation(
+                new Bitmap(pctrbx_selectedImage.Image),
+                Segmentation.Target.Object,
+                GetSeeds(backgroundSeedSelectionRegion),
+                GetSeeds(objectSeedSelectionRegion)
+            );
             var bitmap = segmentation.Cut();
 
             pctrbx_objectImage.Image = bitmap;
+        }
+
+        /** 
+         * Get flat points array from seed selection region
+         * **/
+        private Point[] GetSeeds(byte[,] seedSelectionRegion)
+        {
+            HashSet<string> usedPixels = new HashSet<string>();
+            List<Point> seeds = new List<Point>();
+            
+            for (var i = 0; i < seedSelectionRegion.GetLength(0); i++)
+            {
+                for (var j = 0; j < seedSelectionRegion.GetLength(1); j++)
+                {
+                    if (seedSelectionRegion[i, j] != 0)
+                    {
+                        // Values in initial image bitmap for evaluation pixel intensities
+                        var relativeX = (int)((i - renderedImageBounds.X) * zoom);
+                        var relativeY = (int)((j - renderedImageBounds.Y) * zoom);
+                        var key = relativeX + " " + relativeY;
+
+                        // After zooming, we might to have duplicates in seeds that will break intensity histogram, so we need to exclude them from final seeds 
+                        if (!usedPixels.Contains(key))
+                        {
+                            seeds.Add(new Point(relativeX, relativeY));
+
+                            usedPixels.Add(key);
+                        }
+                    }
+                }
+            }
+
+            return seeds.ToArray();
         }
 
         /** ### DRAWAING SEED SELECTION REGIONS AND BRUSH SETTINGS **/
@@ -152,6 +195,45 @@ namespace Graphs
                 }
             }
         }
+
+        /** 
+         * Draw brush
+         * **/
+        private void DrawBrush(int x, int y)
+        {
+            if (IsCursorInBounds(x, y))
+            {
+                for (var i = x; i < x + cursorSize; i++)
+                {
+                    for (var j = y; j < y + cursorSize; j++)
+                    {
+                        switch (activeBrushType)
+                        {
+                            case BrushType.Background:
+                                backgroundSeedSelectionRegion[i, j] = 1;
+                                objectSeedSelectionRegion[i, j] = 0; // Remove pixel from oposite seed region
+                                break;
+
+                            case BrushType.Object:
+                                objectSeedSelectionRegion[i, j] = 1;
+                                backgroundSeedSelectionRegion[i, j] = 0; // Remove pixel from oposite seed region
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+
+        /** 
+         * Check if cursor is inside image bounds
+         * **/
+        private bool IsCursorInBounds(int x, int y)
+        {
+            bool isXInBounds = x >= renderedImageBounds.X && x <= renderedImageBounds.X + renderedImageBounds.Width - cursorSize;
+            bool isYInBounds = y >= renderedImageBounds.Y && y <= renderedImageBounds.Y + renderedImageBounds.Height - cursorSize;
+
+            return isXInBounds && isYInBounds;
+        }
         
         /** 
          * Drawing shapes onto PictureBox of selected image
@@ -186,37 +268,13 @@ namespace Graphs
          * **/
         private void pctrbx_selectedImage_MouseMove(object sender, MouseEventArgs e)
         {
-            bool isXInBounds = e.X >= renderedImageBounds.X && e.X <= renderedImageBounds.X + renderedImageBounds.Width - cursorSize;
-            bool isYInBounds = e.Y >= renderedImageBounds.Y && e.Y <= renderedImageBounds.Y + renderedImageBounds.Height - cursorSize;
-
-            if (isXInBounds && isYInBounds)
+            if (IsCursorInBounds(e.X, e.Y))
             {
-                // Values in initial image bitmap for evaluation pixel intensities
-                var relativeX = (int)(e.X - renderedImageBounds.X * zoom);
-                var relativeY = (int)(e.Y - renderedImageBounds.Y * zoom);
-
                 cursorQueue.Enqueue(new Point(e.X, e.Y));
 
                 if (isDrawing)
                 {
-                    for (var i = e.X; i < e.X + cursorSize; i++)
-                    {
-                        for (var j = e.Y; j < e.Y + cursorSize; j++)
-                        {
-                            switch (activeBrushType)
-                            {
-                                case BrushType.Background:
-                                    backgroundSeedSelectionRegion[i, j] = 1;
-                                    objectSeedSelectionRegion[i, j] = 0; // Remove pixel from oposite seed region
-                                    break;
-
-                                case BrushType.Object:
-                                    objectSeedSelectionRegion[i, j] = 1;
-                                    backgroundSeedSelectionRegion[i, j] = 0; // Remove pixel from oposite seed region
-                                    break;
-                            }
-                        }
-                    }
+                    DrawBrush(e.X, e.Y);
                 }
 
                 pctrbx_selectedImage.Refresh();
@@ -229,6 +287,8 @@ namespace Graphs
         private void pctrbx_selectedImage_MouseDown(object sender, MouseEventArgs e)
         {
             isDrawing = true;
+
+            DrawBrush(e.X, e.Y);
         }
 
         /**

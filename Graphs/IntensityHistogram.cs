@@ -9,6 +9,10 @@ namespace Graphs
         private int[] histogram;
         private int totalPixelsCount;
 
+        public int AverageBackgroundIntensity { get; private set; }
+
+        public int AverageObjectIntensity { get; private set; }
+
         public IntensityHistogram(Bitmap bitmap)
         {
             totalPixelsCount = bitmap.Width * bitmap.Height;
@@ -28,19 +32,40 @@ namespace Graphs
             GetDefaultSeedsValues();
         }
 
-        public int AverageBackgroundIntensityReferece { get; private set; }
-
-        public int AverageObjectIntensityReferece { get; private set; }
-
-        public double GetIntensityProbability(int intensity, int intensityBase)
+        public IntensityHistogram(double[] intensities)
         {
-            return histogram[intensity] / histogram[intensityBase];
+            totalPixelsCount = intensities.Length;
+            histogram = new int[256];
+
+            for (var i = 0; i < intensities.Length; i++)
+            {
+                var intensity = (int)(intensities[i] * 255);
+
+                histogram[intensity] += 1;
+            }
+        }
+
+        public double GetIntensityProbability(int intensity)
+        {
+            return (double)histogram[intensity] / totalPixelsCount;
+        }
+
+        public override string ToString()
+        {
+            var str = "";
+
+            for (var i = 0; i < histogram.Length; i++)
+            {
+                str += i + ":" + histogram[i] + " ";
+            }
+
+            return str;
         }
 
         private void GetDefaultSeedsValues()
         {
-            AverageBackgroundIntensityReferece = 0;
-            AverageObjectIntensityReferece = 0;
+            AverageBackgroundIntensity = 0;
+            AverageObjectIntensity = 0;
             
             int[] backwardIndexMap = new int[256];
 
@@ -77,12 +102,12 @@ namespace Graphs
                     {
                         if (i < maxDiffIndex)
                         {
-                            AverageBackgroundIntensityReferece += backwardIndexMap[i];
+                            AverageBackgroundIntensity += backwardIndexMap[i];
                             backgroundIntensityPartitionLength += 1;
                         }
                         else
                         {
-                            AverageObjectIntensityReferece += backwardIndexMap[i];
+                            AverageObjectIntensity += backwardIndexMap[i];
                             objectIntensityPartitionLength += 1;
                         }
                     }
@@ -90,30 +115,30 @@ namespace Graphs
                     {
                         if (i < maxDiffIndex)
                         {
-                            AverageObjectIntensityReferece += backwardIndexMap[i];
+                            AverageObjectIntensity += backwardIndexMap[i];
                             objectIntensityPartitionLength += 1;
                         }
                         else
                         {
-                            AverageBackgroundIntensityReferece += backwardIndexMap[i];
+                            AverageBackgroundIntensity += backwardIndexMap[i];
                             backgroundIntensityPartitionLength += 1;
                         }
                     }
                 }
             }
 
-            AverageBackgroundIntensityReferece = (int)Math.Round((double)(AverageBackgroundIntensityReferece / backgroundIntensityPartitionLength));
-            AverageObjectIntensityReferece = (int)Math.Round((double)(AverageObjectIntensityReferece / objectIntensityPartitionLength));
+            AverageBackgroundIntensity = (int)Math.Round((double)(AverageBackgroundIntensity / backgroundIntensityPartitionLength));
+            AverageObjectIntensity = (int)Math.Round((double)(AverageObjectIntensity / objectIntensityPartitionLength));
         }
 
-        static void Swap(ref int x, ref int y)
+        private static void Swap(ref int x, ref int y)
         {
             var t = x;
             x = y;
             y = t;
         }
 
-        static int Partition(int[] array, int minIndex, int maxIndex, int[] indexMap)
+        private static int Partition(int[] array, int minIndex, int maxIndex, int[] indexMap)
         {
             var pivot = minIndex - 1;
             for (var i = minIndex; i < maxIndex; i++)
@@ -132,7 +157,7 @@ namespace Graphs
             return pivot;
         }
 
-        static int[] QuickSort(int[] array, int minIndex, int maxIndex, int[] indexMap)
+        private static int[] QuickSort(int[] array, int minIndex, int maxIndex, int[] indexMap)
         {
             if (minIndex >= maxIndex)
             {
@@ -146,7 +171,7 @@ namespace Graphs
             return array;
         }
 
-        static int[] QuickSort(int[] array, int[] indexMap)
+        private static int[] QuickSort(int[] array, int[] indexMap)
         {
             return QuickSort(array, 0, array.Length - 1, indexMap);
         }

@@ -8,11 +8,7 @@ namespace Graphs
 {
     class Segmentation
     {
-        public enum NeighbourCount
-        {
-            Four = 4,
-            Eight = 8,
-        }
+        // Types
         public enum Terminal
         {
             None = -1,
@@ -26,12 +22,18 @@ namespace Graphs
             Background = 1,
         }
 
-        public class Edge
+        private enum NeighbourCount
+        {
+            Four = 4,
+            Eight = 8,
+        }
+
+        private class Edge
         {
             public double weight;
         }
 
-        public class Node
+        private class Node
         {
             public int index;
             public int x;
@@ -47,141 +49,58 @@ namespace Graphs
             public Terminal terminal;
         }
 
-        // Common
-        public bool isDebugLogEndabled;
-        private Bitmap bitmap;
-        // Graph
+        // Segmenations properites
+        private readonly double epsilon = 0.0000000001;
+        private readonly int lambda;
+        private readonly double sigma;
+        private readonly Target target;
+        private readonly IntensityHistogram fullintensityHistogram;
+        private readonly IntensityHistogram backgroundSeedsIntensityHistogram;
+        private readonly IntensityHistogram objectSeedsIntensityHistogram;
+        private readonly HashSet<string> backgroundSeedsHashSet;
+        private readonly HashSet<string> objectSeedsHashSet;
+
+        // Graph properties
         private List<Node> nodes;
         private Dictionary<string, Edge> edges;
-        private int lambda;
-        private double sigma;
-        // Segmentation
-        private IntensityHistogram intensityHistogram;
-        private double epsilon = 0.0000000001;
-        private Target target;
 
-        public Segmentation(Bitmap bitmap, Target target, NeighbourCount neighbourCount = NeighbourCount.Eight, int lambda = 100, double sigma = 1)
+        // Common and service
+        private readonly Bitmap bitmap;
+        public bool isDebugLogEndabled;
+
+
+        public Segmentation(Bitmap bitmap, Target target, Point[] backgroundSeeds = null, Point[] objectSeeds = null, int lambda = 100, double sigma = 1)
         {
             this.bitmap = bitmap;
             this.lambda = lambda;
             this.sigma = sigma;
             this.target = target;
-            intensityHistogram = new IntensityHistogram(bitmap);   
 
-            CreateGraph(neighbourCount);
-        }
-
-        public void CreateGraph(NeighbourCount neighbourCount)
-        {
-            nodes = new List<Node>();
-            edges = new Dictionary<string, Edge>();
-
-            // Creating nodes
-            var sTerminal = new Node
+            fullintensityHistogram = new IntensityHistogram(bitmap);
+            
+            if (backgroundSeeds != null && backgroundSeeds.Length > 0)
             {
-                index = nodes.Count,
-                x = -1,
-                y = -1,
-                intensity = target == Target.Background ? intensityHistogram.AverageBackgroundIntensityReferece : intensityHistogram.AverageObjectIntensityReferece,
-                error = Int32.MaxValue,
-                isTerminal = true,
-                terminal = Terminal.S,
-                neighbours = new List<int>(),
-            };
+                backgroundSeedsIntensityHistogram = GetIntensityHistogramFromSeeds(backgroundSeeds);
 
-            nodes.Add(sTerminal);
-
-            var tTerminal = new Node
-            {
-                index = nodes.Count,
-                x = -1,
-                y = -1,
-                intensity = target == Target.Background ? intensityHistogram.AverageObjectIntensityReferece : intensityHistogram.AverageBackgroundIntensityReferece,
-                error = 0,
-                height = 0,
-                isTerminal = true,
-                terminal = Terminal.T,
-                neighbours = new List<int>(),
-            };
-
-            for (var i = 0; i < bitmap.Width; i++)
-            {
-                for (var j = 0; j < bitmap.Height; j++)
+                backgroundSeedsHashSet = new HashSet<string>();
+                for (var i = 0; i < backgroundSeeds.Length; i++)
                 {
-                    var node = new Node
-                    {
-                        index = nodes.Count,
-                        x = i,
-                        y = j,
-                        intensity = (int)(bitmap.GetPixel(i, j).GetBrightness() * 255),
-                        error = 0,
-                        height = 0,
-                        isTerminal = false,
-                        terminal = Terminal.None,
-                        neighbours = new List<int>(),
-                    };
-
-                    nodes.Add(node);
+                    backgroundSeedsHashSet.Add("" + backgroundSeeds[i].X + backgroundSeeds[i].Y);
                 }
             }
 
-            nodes.Add(tTerminal);
-
-            sTerminal.height = nodes.Count;
-
-            for (var index = 1; index < nodes.Count - 1; index++)
+            if (objectSeeds != null && objectSeeds.Length > 0)
             {
-                var node = nodes[index];
+                objectSeedsIntensityHistogram = GetIntensityHistogramFromSeeds(objectSeeds);
 
-                for (var i = -1; i < 2; i++)
+                objectSeedsHashSet = new HashSet<string>();
+                for (var i = 0; i < objectSeeds.Length; i++)
                 {
-                    for (var j = -1; j < 2; j++)
-                    {
-                        if (neighbourCount == NeighbourCount.Four && Math.Abs(i) + Math.Abs(j) == 2 || i == 0 && j == 0)
-                        {
-                            continue;
-                        }
-
-                        var neighbour = GetNodeNeighbour(index, i, j);
-
-                        if (neighbour != null)
-                        {
-                            var neighbourIndex = (int)neighbour?.index;
-
-                            node.neighbours.Add(neighbourIndex);
-
-                            edges.Add(GetEdgeKey(node.index, neighbourIndex), new Edge
-                            {
-                                weight = GetEdgeWeight(node, nodes[neighbourIndex]),
-                            });
-                        }
-                    }
+                    objectSeedsHashSet.Add("" + objectSeeds[i].X + objectSeeds[i].Y);
                 }
-
-                node.neighbours.Add(nodes.Count - 1);
-                node.neighbours.Add(0);
-                nodes[0].neighbours.Add(node.index);
-                nodes[nodes.Count - 1].neighbours.Add(node.index);
-
-                edges.Add(GetEdgeKey(node.index, 0), new Edge
-                {
-                    weight = 0,
-                });
-                edges.Add(GetEdgeKey(0, node.index), new Edge
-                {
-                    weight = GetEdgeWeight(nodes[0], node),
-                });
-
-                edges.Add(GetEdgeKey(node.index, nodes.Count - 1), new Edge
-                {
-                    weight = GetEdgeWeight(node, nodes[nodes.Count - 1]),
-                });
-
-                edges.Add(GetEdgeKey(nodes.Count - 1, node.index), new Edge
-                {
-                    weight = 0,
-                });
             }
+
+            CreateGraph(NeighbourCount.Eight);
         }
 
         public string GetStringifiedGraph()
@@ -287,6 +206,119 @@ namespace Graphs
             return segmentatedImageBitmap;
         }
 
+        private void CreateGraph(NeighbourCount neighbourCount)
+        {
+            nodes = new List<Node>();
+            edges = new Dictionary<string, Edge>();
+
+            // Creating nodes
+            var sTerminal = new Node
+            {
+                index = nodes.Count,
+                x = -1,
+                y = -1,
+                intensity = target == Target.Background ? fullintensityHistogram.AverageBackgroundIntensity : fullintensityHistogram.AverageObjectIntensity,
+                error = Int32.MaxValue,
+                isTerminal = true,
+                terminal = Terminal.S,
+                neighbours = new List<int>(),
+            };
+
+            nodes.Add(sTerminal);
+
+            var tTerminal = new Node
+            {
+                index = nodes.Count,
+                x = -1,
+                y = -1,
+                intensity = target == Target.Background ? fullintensityHistogram.AverageObjectIntensity : fullintensityHistogram.AverageBackgroundIntensity,
+                error = 0,
+                height = 0,
+                isTerminal = true,
+                terminal = Terminal.T,
+                neighbours = new List<int>(),
+            };
+
+            for (var i = 0; i < bitmap.Width; i++)
+            {
+                for (var j = 0; j < bitmap.Height; j++)
+                {
+                    var node = new Node
+                    {
+                        index = nodes.Count,
+                        x = i,
+                        y = j,
+                        intensity = (int)(bitmap.GetPixel(i, j).GetBrightness() * 255),
+                        error = 0,
+                        height = 0,
+                        isTerminal = false,
+                        terminal = Terminal.None,
+                        neighbours = new List<int>(),
+                    };
+
+                    nodes.Add(node);
+                }
+            }
+
+            nodes.Add(tTerminal);
+
+            sTerminal.height = nodes.Count;
+
+            for (var index = 1; index < nodes.Count - 1; index++)
+            {
+                var node = nodes[index];
+
+                for (var i = -1; i < 2; i++)
+                {
+                    for (var j = -1; j < 2; j++)
+                    {
+                        if (neighbourCount == NeighbourCount.Four && Math.Abs(i) + Math.Abs(j) == 2 || i == 0 && j == 0)
+                        {
+                            continue;
+                        }
+
+                        var neighbour = GetNodeNeighbour(index, i, j);
+
+                        if (neighbour != null)
+                        {
+                            var neighbourIndex = (int)neighbour?.index;
+
+                            node.neighbours.Add(neighbourIndex);
+
+                            edges.Add(GetEdgeKey(node.index, neighbourIndex), new Edge
+                            {
+                                weight = GetEdgeWeight(node, nodes[neighbourIndex]),
+                            });
+                        }
+                    }
+                }
+
+                node.neighbours.Add(nodes.Count - 1);
+                node.neighbours.Add(0);
+                nodes[0].neighbours.Add(node.index);
+                nodes[nodes.Count - 1].neighbours.Add(node.index);
+
+                edges.Add(GetEdgeKey(node.index, 0), new Edge
+                {
+                    weight = 0,
+                });
+                edges.Add(GetEdgeKey(0, node.index), new Edge
+                {
+                    weight = GetEdgeWeight(nodes[0], node),
+                });
+
+                edges.Add(GetEdgeKey(node.index, nodes.Count - 1), new Edge
+                {
+                    weight = GetEdgeWeight(node, nodes[nodes.Count - 1]),
+                });
+
+                edges.Add(GetEdgeKey(nodes.Count - 1, node.index), new Edge
+                {
+                    weight = 0,
+                });
+            }
+        }
+
         private void PushFlow(Queue<Node> queue, Node from, Node to)
         {
             if (isDebugLogEndabled)
@@ -370,7 +402,7 @@ namespace Graphs
             int multiplier = 100;
             
             // n-links weight
-            if (!to.isTerminal && !from.isTerminal)
+            if (!from.isTerminal && !to.isTerminal)
             {
                 var delta = Math.Pow(from.intensity - to.intensity, 2);
                 var weight = Math.Exp(-1 * delta / (2 * Math.Pow(sigma, 2)));
@@ -380,10 +412,72 @@ namespace Graphs
             // t-links weight
             else
             {
-                var delta = Math.Pow(from.intensity - to.intensity, 2);
-                var weight = lambda * Math.Exp(-1 * delta / 2);
+                // Calculate weight if pixel node relates to one of the seeds
+                var terminalNode = from.isTerminal
+                    ? from
+                    : to;
+                var pixelNode = from.isTerminal
+                    ? to
+                    : from;
 
-                return (int)(weight * multiplier);
+                var backgroundTerminalType = target == Target.Background
+                    ? Terminal.S
+                    : Terminal.T;
+                var objectTerminalType = target == Target.Object
+                    ? Terminal.T
+                    : Terminal.S;
+
+                if (terminalNode.terminal == backgroundTerminalType)
+                {
+                    if (objectSeedsHashSet != null && objectSeedsHashSet.Contains(GetNodeKey(pixelNode.x, pixelNode.y)))
+                    {
+                        return 0;
+                    }
+
+                    if (backgroundSeedsHashSet != null && backgroundSeedsHashSet.Contains(GetNodeKey(pixelNode.x, pixelNode.y)))
+                    {
+                        return lambda; // TODO: return K
+                    }
+                }
+
+                if (terminalNode.terminal == objectTerminalType)
+                {
+                    if (objectSeedsHashSet != null && objectSeedsHashSet.Contains(GetNodeKey(pixelNode.x, pixelNode.y)))
+                    {
+                        return lambda; // TODO: return K
+                    }
+
+                    if (backgroundSeedsHashSet != null && backgroundSeedsHashSet.Contains(GetNodeKey(pixelNode.x, pixelNode.y)))
+                    {
+                        return 0;
+                    }
+                }
+
+                // Calculate weight, pixel does not relate to one of the seeds
+                var fromTerminalHistogram = target == Target.Background
+                    ? backgroundSeedsIntensityHistogram
+                    : objectSeedsIntensityHistogram;
+                var toTerminalHistogram = target == Target.Background
+                    ? objectSeedsIntensityHistogram
+                    : backgroundSeedsIntensityHistogram;
+
+                if (from.isTerminal && fromTerminalHistogram == null || to.isTerminal && toTerminalHistogram == null)
+                {
+                    var delta = Math.Pow(from.intensity - to.intensity, 2);
+                    var weight = (int)(lambda * Math.Exp(-1 * delta / 2) * multiplier);
+
+                    return weight;
+                } else
+                {
+                    var histogram = from.isTerminal
+                    ? fromTerminalHistogram
+                    : toTerminalHistogram;
+
+                    var delta = -1 * Math.Log(histogram.GetIntensityProbability(to.intensity));
+                    var weight = (int)(lambda * delta * multiplier);
+
+                    return weight;
+                }
             }
         }
 
@@ -410,6 +504,23 @@ namespace Graphs
         private string GetEdgeKey(int from, int to)
         {
             return from + " " + to;
+        }
+    
+        private string GetNodeKey(int x, int y)
+        {
+            return x + "" + y;
+        }
+
+        private IntensityHistogram GetIntensityHistogramFromSeeds(Point[] seeds)
+        {
+            double[] intensities = new double[seeds.Length];
+
+            for (var i = 0; i < seeds.Length; i++)
+            {
+                intensities[i] = bitmap.GetPixel(seeds[i].X, seeds[i].Y).GetBrightness();
+            }
+
+            return new IntensityHistogram(intensities);
         }
     }
 }
