@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
 using System.Windows.Forms;
 
 namespace Graphs
@@ -94,7 +96,7 @@ namespace Graphs
         {
             using (OpenFileDialog openFileDialog = new OpenFileDialog())
             {
-                openFileDialog.InitialDirectory = "c:\\users\\eliza\\Desktop";
+                openFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
                 openFileDialog.Filter = "Image Files(*.BMP;*.JPG;*.PNG)|*.BMP;*.JPG;*.PNG";
                 openFileDialog.FilterIndex = 2;
                 openFileDialog.RestoreDirectory = true;
@@ -102,6 +104,27 @@ namespace Graphs
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
                 {
                     pctrbx_selectedImage.ImageLocation = openFileDialog.FileName;
+                }
+            }
+        }
+
+        /** 
+         * Save segmentation result
+         * **/
+        private void btn_saveSegmentation_Click(object sender, EventArgs e)
+        {
+            using (SaveFileDialog saveFileDialog = new SaveFileDialog())
+            {
+                saveFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+                saveFileDialog.Filter = "Image Files(*.BMP;*.JPG;*.PNG)|*.BMP;*.JPG;*.PNG";
+                saveFileDialog.FilterIndex = 2;
+                saveFileDialog.RestoreDirectory = true;
+
+                if (saveFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    var bitmap = new Bitmap(pctrbx_segmentationImage.Image);
+                    
+                    bitmap.Save(saveFileDialog.FileName, ImageFormat.Bmp);
                 }
             }
         }

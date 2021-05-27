@@ -65,6 +65,7 @@
             this.tableLayoutPanel4 = new System.Windows.Forms.TableLayoutPanel();
             this.btn_compare = new System.Windows.Forms.Button();
             this.btn_selectIdeal = new System.Windows.Forms.Button();
+            this.btn_saveSegmentation = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.pctrbx_selectedImage)).BeginInit();
             this.flowLayoutPanel1.SuspendLayout();
             this.groupBox1.SuspendLayout();
@@ -119,7 +120,7 @@
             // 
             this.btn_segmentize.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btn_segmentize.Location = new System.Drawing.Point(166, 0);
-            this.btn_segmentize.Margin = new System.Windows.Forms.Padding(3, 0, 0, 0);
+            this.btn_segmentize.Margin = new System.Windows.Forms.Padding(3, 0, 3, 0);
             this.btn_segmentize.Name = "btn_segmentize";
             this.btn_segmentize.Size = new System.Drawing.Size(176, 43);
             this.btn_segmentize.TabIndex = 6;
@@ -131,6 +132,7 @@
             // 
             this.flowLayoutPanel1.Controls.Add(this.btn_selectImage);
             this.flowLayoutPanel1.Controls.Add(this.btn_segmentize);
+            this.flowLayoutPanel1.Controls.Add(this.btn_saveSegmentation);
             this.flowLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.flowLayoutPanel1.Location = new System.Drawing.Point(18, 795);
             this.flowLayoutPanel1.Margin = new System.Windows.Forms.Padding(0);
@@ -597,6 +599,19 @@
             this.btn_selectIdeal.UseVisualStyleBackColor = true;
             this.btn_selectIdeal.Click += new System.EventHandler(this.btn_selectIdeal_Click);
             // 
+            // btn_saveSegmentation
+            // 
+            this.btn_saveSegmentation.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
+            this.btn_saveSegmentation.Location = new System.Drawing.Point(345, 0);
+            this.btn_saveSegmentation.Margin = new System.Windows.Forms.Padding(0);
+            this.btn_saveSegmentation.Name = "btn_saveSegmentation";
+            this.btn_saveSegmentation.Size = new System.Drawing.Size(149, 43);
+            this.btn_saveSegmentation.TabIndex = 7;
+            this.btn_saveSegmentation.Text = "Save result";
+            this.btn_saveSegmentation.UseVisualStyleBackColor = true;
+            this.btn_saveSegmentation.Click += new System.EventHandler(this.btn_saveSegmentation_Click);
+            // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
@@ -672,6 +687,7 @@
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel4;
         private System.Windows.Forms.Button btn_compare;
         private System.Windows.Forms.Button btn_selectIdeal;
+        private System.Windows.Forms.Button btn_saveSegmentation;
     }
 }
 
