@@ -9,6 +9,8 @@ namespace Graphs
         private int[] histogram;
         private int totalPixelsCount;
 
+        public int AverageIntensity { get; private set; }
+
         public int AverageBackgroundIntensity { get; private set; }
 
         public int AverageObjectIntensity { get; private set; }
@@ -18,6 +20,8 @@ namespace Graphs
             totalPixelsCount = bitmap.Width * bitmap.Height;
             histogram = new int[256];
 
+            int totalIntensity = 0;
+
             for (var i = 0; i < bitmap.Width; i++)
             {
                 for (var j = 0; j < bitmap.Height; j++)
@@ -25,9 +29,13 @@ namespace Graphs
                     var intensity = bitmap.GetPixel(i, j).GetBrightness();
                     int normalizedIntensity = (int)(intensity * 255);
 
+                    totalIntensity += normalizedIntensity;
+
                     histogram[normalizedIntensity] += 1;
                 }
             }
+
+            AverageIntensity = (int)Math.Round((double)totalIntensity / totalPixelsCount);
 
             GetDefaultSeedsValues();
         }
@@ -35,14 +43,21 @@ namespace Graphs
         public IntensityHistogram(double[] intensities)
         {
             totalPixelsCount = intensities.Length;
+
             histogram = new int[256];
+
+            var totalIntensity = 0;
 
             for (var i = 0; i < intensities.Length; i++)
             {
                 var intensity = (int)(intensities[i] * 255);
 
+                totalIntensity += intensity;
+
                 histogram[intensity] += 1;
             }
+
+            AverageIntensity = (int)Math.Round((double)totalIntensity / totalPixelsCount);
         }
 
         public double GetIntensityProbability(int intensity)

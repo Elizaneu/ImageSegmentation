@@ -31,7 +31,6 @@ namespace Graphs
         // Properties
         private int lambda = Segmentation.LABMDA;
         private double sigma = Segmentation.SIGMA;
-        private int scale = Segmentation.SCALE;
 
         public Main()
         {
@@ -45,7 +44,6 @@ namespace Graphs
 
             inpt_lambda.Text = "" + lambda;
             inpt_sigma.Text = "" + sigma;
-            inpt_scale.Text = "" + scale;
         }
 
         /** ### INITALIZATION ### **/
@@ -78,6 +76,15 @@ namespace Graphs
             }
         }
 
+        // Enable "Compare" button, when ideal image is loaded
+        private void pctrbx_idealImage_LoadCompleted(object sender, System.ComponentModel.AsyncCompletedEventArgs e)
+        {
+            if (pctrbx_segmentationImage.Image != null)
+            {
+                btn_compare.Enabled = true;
+            }
+        }
+
         /** ### CORE FUNCTIONALITY ###  **/
 
         /**
@@ -103,18 +110,17 @@ namespace Graphs
          * Find and print background
          * **/
         private void btn_segmentize_Click(object sender, EventArgs e)
-        {
+        {            
             var segmentation = new Segmentation(
                 new Bitmap(pctrbx_selectedImage.Image),
                 GetSeeds(backgroundSeedSelectionRegion),
                 GetSeeds(objectSeedSelectionRegion),
                 lambda,
-                sigma,
-                scale
+                sigma
             );
             var bitmap = segmentation.Cut();
 
-            pctrbx_backgroundImage.Image = bitmap;
+            pctrbx_segmentationImage.Image = bitmap;
         }
 
         /** 
@@ -150,6 +156,9 @@ namespace Graphs
             return seeds.ToArray();
         }
 
+        /** 
+         * Clear seed selection region
+         * **/
         private void ClearSeedSelectionRegion(byte[,] seedSelectionRegion)
         {
             for (var i = 0; i < seedSelectionRegion.GetLength(0); i++)
@@ -161,21 +170,59 @@ namespace Graphs
             }
         }
 
+        /** Quality Assertion **/
+
+        /** 
+         * Selec image for comparison
+         * **/
+        private void btn_selectIdeal_Click(object sender, EventArgs e)
+        {
+            using (OpenFileDialog openFileDialog = new OpenFileDialog())
+            {
+                openFileDialog.InitialDirectory = "c:\\users\\eliza\\Desktop";
+                openFileDialog.Filter = "Image Files(*.BMP;*.JPG;*.PNG)|*.BMP;*.JPG;*.PNG";
+                openFileDialog.FilterIndex = 2;
+                openFileDialog.RestoreDirectory = true;
+
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    pctrbx_idealImage.ImageLocation = openFileDialog.FileName;
+                }
+            }
+        }
+
+        /** 
+         * Compare segmentation with ideal
+         * **/
+        private void btn_compare_Click(object sender, EventArgs e)
+        {
+            var assertion = new QualityAssertion(new Bitmap(pctrbx_segmentationImage.Image), new Bitmap(pctrbx_idealImage.Image));
+            var metrics = assertion.GetQualityMetrics();
+
+            lbl_correctObjToTotal.Text = metrics.CorrectObjectPixelsToTotalPixels + "%";
+            lbl_correctBgToTotal.Text = metrics.CorrectBackgroundPixelsToTotalPixels + "%";
+            lbl_correctToTotal.Text = metrics.AllCorrectPixelsToTotalPixels + "%";
+            lbl_jaccard.Text = metrics.JaccardMetric + "%";
+        }
+
         /** READ SEGMENTATION PROPPERTIES FROM USER **/
 
         private void inpt_lambda_TextChanged(object sender, EventArgs e)
         {
-            lambda = Int32.Parse(inpt_lambda.Text);
+            try
+            {
+                lambda = Int32.Parse(inpt_lambda.Text);
+            } catch (Exception)
+            { }
         }
 
         private void inpt_sigma_TextChanged(object sender, EventArgs e)
         {
-            sigma = Double.Parse(inpt_sigma.Text);
-        }
-
-        private void inpt_scale_TextChanged(object sender, EventArgs e)
-        {
-            scale = Int32.Parse(inpt_scale.Text);
+            try
+            {
+                sigma = Double.Parse(inpt_sigma.Text);
+            } catch (Exception)
+            { }
         }
 
         /** ### DRAWAING SEED SELECTION REGIONS AND BRUSH SETTINGS **/
@@ -358,11 +405,17 @@ namespace Graphs
             cursorSize = (int)inpt_objectBrushSize.Value;
         }
 
+        /** 
+         * Clear background seed selection
+         * **/
         private void btn_clearBackgroundSeed_Click(object sender, EventArgs e)
         {
             ClearSeedSelectionRegion(backgroundSeedSelectionRegion);
         }
 
+        /**
+         * Clear object seed selection
+         * **/
         private void btn_clearObjectSeed_Click(object sender, EventArgs e)
         {
             ClearSeedSelectionRegion(objectSeedSelectionRegion);

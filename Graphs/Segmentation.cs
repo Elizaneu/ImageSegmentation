@@ -10,7 +10,6 @@ namespace Graphs
     {
         public const int LABMDA = 50;
         public const double SIGMA = 0.5;
-        public const int SCALE = 20;
 
         // Types
         public enum Terminal
@@ -51,7 +50,6 @@ namespace Graphs
         private readonly double epsilon = 0.000000001;
         private readonly int lambda;
         private readonly double sigma;
-        private readonly int scale;
         private readonly IntensityHistogram fullIntensityHistogram;
         private readonly IntensityHistogram backgroundSeedsIntensityHistogram;
         private readonly IntensityHistogram objectSeedsIntensityHistogram;
@@ -67,16 +65,14 @@ namespace Graphs
         private readonly Bitmap bitmap;
         public bool isDebugLogEndabled;
 
-
-        public Segmentation(Bitmap bitmap, Point[] backgroundSeeds = null, Point[] objectSeeds = null, int lambda = LABMDA, double sigma = SIGMA, int scale = SCALE)
-        {
+        public Segmentation(Bitmap bitmap, Point[] backgroundSeeds = null, Point[] objectSeeds = null, int lambda = LABMDA, double sigma = SIGMA)
+        {            
             this.bitmap = bitmap;
             this.lambda = lambda;
             this.sigma = sigma;
-            this.scale = scale;
 
             fullIntensityHistogram = new IntensityHistogram(bitmap);
-            
+
             if (backgroundSeeds != null && backgroundSeeds.Length > 0)
             {
                 backgroundSeedsIntensityHistogram = GetIntensityHistogramFromSeeds(backgroundSeeds);
@@ -127,13 +123,13 @@ namespace Graphs
             {
                 PushFlow(queue, start, nodes[start.neighbours[i]]);
             }
+            start.height = nodes.Count;
             start.error = 0;
 
             while (queue.Count != 0)
             {
                 Node node = queue.Dequeue();
-
-                if (!node.isTerminal)
+                if (node.terminal != Terminal.S)
                 {
                     Discharge(queue, node);
                 }
@@ -163,8 +159,9 @@ namespace Graphs
             Queue<Node> queue = new Queue<Node>();
             bool[] isVisited = new bool[nodes.Count];
 
-            //queue.Enqueue(nodes[nodes.Count - 1]);
-            queue.Enqueue(nodes[0]);
+            queue.Enqueue(nodes[nodes.Count - 1]); // if uncomment - seeds are not working
+            //queue.Enqueue(nodes[0]); // not working background seeds selection
+            //queue.Enqueue(nodes[0]);
 
             while (queue.Count != 0)
             {
@@ -240,8 +237,8 @@ namespace Graphs
                 x = -1,
                 y = -1,
                 intensity = fullIntensityHistogram.AverageObjectIntensity,
-                height = 0,
                 error = 0,
+                height = 0,
                 isTerminal = true,
                 terminal = Terminal.T,
                 neighbours = new List<int>(),
@@ -315,7 +312,7 @@ namespace Graphs
 
                 edges.Add(GetEdgeKey(node.index, 0), new Edge
                 {
-                    weight = 0,
+                    weight = GetEdgeWeight(node, nodes[0]),
                 });
                 edges.Add(GetEdgeKey(0, node.index), new Edge
                 {
@@ -329,7 +326,7 @@ namespace Graphs
 
                 edges.Add(GetEdgeKey(nodes.Count - 1, node.index), new Edge
                 {
-                    weight = 0,
+                    weight = GetEdgeWeight(nodes[nodes.Count - 1], node),
                 });
             }
         }
@@ -414,8 +411,6 @@ namespace Graphs
 
         private double GetEdgeWeight(Node from, Node to)
         {
-            int multiplier = scale;
-            
             // n-links weight
             if (!from.isTerminal && !to.isTerminal)
             {
@@ -423,18 +418,18 @@ namespace Graphs
                 var dist = Math.Sqrt(Math.Pow(from.x - to.x, 2) + Math.Pow(from.y - to.y, 2));
                 var weight = Math.Exp(-1 * delta / (2 * Math.Pow(sigma, 2))) / dist;
 
-                return (multiplier*weight);
+                return weight;
             }
             // t-links weight
             else
             {
-                // Calculate weight if pixel node relates to one of the seeds
                 var pixelNode = from.isTerminal
                     ? to
                     : from;
 
-                if (from.isTerminal)
-                {
+                // Calculate weight if pixel node relates to one of the seeds
+                if (from.terminal == Terminal.S || to.terminal == Terminal.S)
+                {   
                     if (objectSeedsHashSet != null && objectSeedsHashSet.Contains(GetNodeKey(pixelNode.x, pixelNode.y)))
                     {
                         return 0;
@@ -444,9 +439,10 @@ namespace Graphs
                     {
                         return maxNeighbourhoodEdgesWeightSum;
                     }
+                    
                 }
 
-                if (to.isTerminal)
+                if (from.terminal == Terminal.T || to.terminal == Terminal.T)
                 {
                     if (objectSeedsHashSet != null && objectSeedsHashSet.Contains(GetNodeKey(pixelNode.x, pixelNode.y)))
                     {
@@ -458,22 +454,33 @@ namespace Graphs
                         return 0;
                     }
                 }
+
 
                 // Calculate weight, pixel does not relate to one of the seeds
-                if (from.isTerminal && backgroundSeedsIntensityHistogram == null || to.isTerminal && objectSeedsIntensityHistogram == null)
-                {                    
+                if (backgroundSeedsIntensityHistogram == null || objectSeedsIntensityHistogram == null)
+                {
                     var delta = Math.Pow(from.intensity - to.intensity, 2);
-                    var weight = (multiplier * lambda * Math.Exp(-1 * delta / 2));
+                    var weight = (lambda * Math.Exp(-1 * delta / 2));
 
                     return weight;
                 } else
                 {
-                    var histogram = from.isTerminal
-                        ? backgroundSeedsIntensityHistogram
-                        : objectSeedsIntensityHistogram;
+                    var terminalNode = from.isTerminal
+                        ? from
+                        : to;
 
-                    var delta = -1 * Math.Log(histogram.GetIntensityProbability(pixelNode.intensity));
-                    var weight = (multiplier * lambda * delta);
+                    var backgroundProbability = backgroundSeedsIntensityHistogram.GetIntensityProbability(pixelNode.intensity);
+                    var objectProbability = objectSeedsIntensityHistogram.GetIntensityProbability(pixelNode.intensity);
+
+                    var probability = terminalNode.terminal == Terminal.T
+                        ? backgroundProbability / (backgroundProbability + objectProbability)
+                        : objectProbability / (backgroundProbability + objectProbability);
+                    var weight = lambda * -1 * Math.Log(probability * 255);
+
+                    //var probability = terminalNode.terminal == Terminal.T
+                    //    ? objectProbability
+                    //    : backgroundProbability;
+                    //var weight = lambda * -1 * Math.Log(probability);
 
                     return weight;
                 }
@@ -552,5 +559,8 @@ namespace Graphs
 
             return new IntensityHistogram(intensities);
         }
+
     }
-}
+
+
+    }
