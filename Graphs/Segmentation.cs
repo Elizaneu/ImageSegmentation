@@ -124,7 +124,7 @@ namespace Graphs
                 PushFlow(queue, start, nodes[start.neighbours[i]]);
             }
             start.height = nodes.Count;
-            start.error = 0;
+            start.error = Int32.MaxValue;
 
             while (queue.Count != 0)
             {
@@ -161,7 +161,6 @@ namespace Graphs
 
             queue.Enqueue(nodes[nodes.Count - 1]); // if uncomment - seeds are not working
             //queue.Enqueue(nodes[0]); // not working background seeds selection
-            //queue.Enqueue(nodes[0]);
 
             while (queue.Count != 0)
             {
@@ -223,7 +222,7 @@ namespace Graphs
                 x = -1,
                 y = -1,
                 intensity = fullIntensityHistogram.AverageBackgroundIntensity,
-                error = Int32.MaxValue,
+                error = 0,
                 isTerminal = true,
                 terminal = Terminal.S,
                 neighbours = new List<int>(),
@@ -267,7 +266,7 @@ namespace Graphs
 
             nodes.Add(tTerminal);
 
-            sTerminal.height = nodes.Count;
+            tTerminal.height = nodes.Count;
 
             for (var index = 1; index < nodes.Count - 1; index++)
             {
