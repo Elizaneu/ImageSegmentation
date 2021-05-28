@@ -32,6 +32,7 @@
             this.pctrbx_selectedImage = new System.Windows.Forms.PictureBox();
             this.btn_segmentize = new System.Windows.Forms.Button();
             this.flowLayoutPanel1 = new System.Windows.Forms.FlowLayoutPanel();
+            this.btn_saveSegmentation = new System.Windows.Forms.Button();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.groupBox4 = new System.Windows.Forms.GroupBox();
             this.tableLayoutPanel2 = new System.Windows.Forms.TableLayoutPanel();
@@ -65,7 +66,6 @@
             this.tableLayoutPanel4 = new System.Windows.Forms.TableLayoutPanel();
             this.btn_compare = new System.Windows.Forms.Button();
             this.btn_selectIdeal = new System.Windows.Forms.Button();
-            this.btn_saveSegmentation = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.pctrbx_selectedImage)).BeginInit();
             this.flowLayoutPanel1.SuspendLayout();
             this.groupBox1.SuspendLayout();
@@ -139,6 +139,19 @@
             this.flowLayoutPanel1.Name = "flowLayoutPanel1";
             this.flowLayoutPanel1.Size = new System.Drawing.Size(1383, 45);
             this.flowLayoutPanel1.TabIndex = 9;
+            // 
+            // btn_saveSegmentation
+            // 
+            this.btn_saveSegmentation.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
+            this.btn_saveSegmentation.Location = new System.Drawing.Point(345, 0);
+            this.btn_saveSegmentation.Margin = new System.Windows.Forms.Padding(0);
+            this.btn_saveSegmentation.Name = "btn_saveSegmentation";
+            this.btn_saveSegmentation.Size = new System.Drawing.Size(149, 43);
+            this.btn_saveSegmentation.TabIndex = 7;
+            this.btn_saveSegmentation.Text = "Save result";
+            this.btn_saveSegmentation.UseVisualStyleBackColor = true;
+            this.btn_saveSegmentation.Click += new System.EventHandler(this.btn_saveSegmentation_Click);
             // 
             // groupBox1
             // 
@@ -598,19 +611,6 @@
             this.btn_selectIdeal.Text = "Select ideal";
             this.btn_selectIdeal.UseVisualStyleBackColor = true;
             this.btn_selectIdeal.Click += new System.EventHandler(this.btn_selectIdeal_Click);
-            // 
-            // btn_saveSegmentation
-            // 
-            this.btn_saveSegmentation.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left)));
-            this.btn_saveSegmentation.Location = new System.Drawing.Point(345, 0);
-            this.btn_saveSegmentation.Margin = new System.Windows.Forms.Padding(0);
-            this.btn_saveSegmentation.Name = "btn_saveSegmentation";
-            this.btn_saveSegmentation.Size = new System.Drawing.Size(149, 43);
-            this.btn_saveSegmentation.TabIndex = 7;
-            this.btn_saveSegmentation.Text = "Save result";
-            this.btn_saveSegmentation.UseVisualStyleBackColor = true;
-            this.btn_saveSegmentation.Click += new System.EventHandler(this.btn_saveSegmentation_Click);
             // 
             // Main
             // 

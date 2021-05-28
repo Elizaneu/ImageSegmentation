@@ -117,7 +117,7 @@ namespace Graphs
         public double GetMaxFlow()
         {
             Queue<Node> queue = new Queue<Node>();
-            Node start = nodes[nodes.Count - 1];
+            Node start = nodes[0];
 
             for (var i = 0; i < start.neighbours.Count; i++)
             {
@@ -159,8 +159,7 @@ namespace Graphs
             Queue<Node> queue = new Queue<Node>();
             bool[] isVisited = new bool[nodes.Count];
 
-            queue.Enqueue(nodes[nodes.Count - 1]); // if uncomment - seeds are not working
-            //queue.Enqueue(nodes[0]); // not working background seeds selection
+            queue.Enqueue(nodes[nodes.Count - 1]);
 
             while (queue.Count != 0)
             {
@@ -193,7 +192,14 @@ namespace Graphs
             {
                 for (var j = 0; j < bitmap.Height; j++)
                 {
-                    segmentatedImageBitmap.SetPixel(i, j, Color.White);
+                    if (backgroundSeedsHashSet != null && backgroundSeedsHashSet.Contains(GetNodeKey(i, j)))
+                    {
+                        segmentatedImageBitmap.SetPixel(i, j, Color.Black);
+                    }
+                    else
+                    {
+                        segmentatedImageBitmap.SetPixel(i, j, Color.White);
+                    }
                 }
             }
 
@@ -476,11 +482,6 @@ namespace Graphs
                         : objectProbability / (backgroundProbability + objectProbability);
                     var weight = lambda * -1 * Math.Log(probability * 255);
 
-                    //var probability = terminalNode.terminal == Terminal.T
-                    //    ? objectProbability
-                    //    : backgroundProbability;
-                    //var weight = lambda * -1 * Math.Log(probability);
-
                     return weight;
                 }
             }
@@ -558,8 +559,5 @@ namespace Graphs
 
             return new IntensityHistogram(intensities);
         }
-
     }
-
-
-    }
+ }
